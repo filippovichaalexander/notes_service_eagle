@@ -4,7 +4,7 @@ GitHub Actions воркфлоу для автоматизированного т
 
 ## Workflows
 
-### 1. Tests & Linting (`test.yml`)
+### 1. Тестирование & Linting (`test.yml`)
 
 При каждом push and pull:
 - Lint frontend and backend code
@@ -19,7 +19,7 @@ Builds and pushes Docker images to Docker Hub and GitHub Container Registry:
 - Backend image: `notes-backend:tag`
 - Frontend image: `notes-frontend:tag`
 
-**Trigger**: Push to main, manual workflow dispatch
+**Trigger**: Push в main
 
 ### 3. Deploy to Production (`deploy.yml`)
 
@@ -37,7 +37,7 @@ Builds and pushes Docker images to Docker Hub and GitHub Container Registry:
 - Статический анализ кода (CodeQL)
 - Поиск уязвимостей в Docker-образах (Trivy)
 
-**Trigger**: Push to main/develop, weekly schedule
+**Trigger**: Push в main/develop
 
 ### 5. Performance Tests (`performance.yml`)
 
@@ -47,40 +47,25 @@ Builds and pushes Docker images to Docker Hub and GitHub Container Registry:
 - Лучшие практики
 - SEO
 
-**Trigger**: Push to main/develop
+**Trigger**: Push в main/develop
 
 ## Setup Instructions
 
-### 1. Docker Hub Setup
+### 1. Настройка Docker Hub
 
-1. Create Docker Hub account
-2. Generate access token
-3. Add to GitHub Secrets
+1. Создайте аккаунт в Docker Hub
+2. Сгенерируйте токен доступа
+3. Добавьте в GitHub Secrets
 
-### 2. AWS ECS Setup
+### 2. Настройка AWS ECS
 
 1. Create ECS cluster: `notes-app-cluster`
 2. Create ECS service: `notes-app-service`
 3. Add AWS credentials to GitHub Secrets
 
-### 3. Slack Integration (Optional)
+## Локальное тестирование
 
-1. Create Slack webhook
-2. Add to GitHub Secrets: `SLACK_WEBHOOK`
-
-## Workflow Badges
-
-Add to your README.md:
-
-\`\`\`markdown
-![Tests](https://github.com/YOUR_USERNAME/notes-app/workflows/Tests%20%26%20Linting/badge.svg)
-![Build](https://github.com/YOUR_USERNAME/notes-app/workflows/Build%20%26%20Push/badge.svg)
-![Security](https://github.com/YOUR_USERNAME/notes-app/workflows/Security%20Scan/badge.svg)
-\`\`\`
-
-## Local Testing
-
-Test workflows locally using `act`:
+Используйте тестирование, применяя `act`:
 
 \`\`\`bash
 # Install act

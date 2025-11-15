@@ -90,3 +90,32 @@ export async function PATCH(
   }
 }
 
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { user, response } = await authenticateRequest(request)
+  if (!user) return response!
+
+  try {
+    const { id } = await params
+    const noteIndex = notesDb.findIndex(
+      (n: Note) => n.id === parseInt(id) && n.userId === user.userId
+    )
+
+    if (noteIndex === -1) {
+      return NextResponse.json(
+        { error: 'Note not found' },
+        { status: 404 }
+      )
+    }
+
+    const deletedNote = notesDb.splice(noteIndex, 1)
+    return NextResponse.json(deletedNote[0])
+  } catch (error) {
+    return NextResponse.json(
+      { error: 'Failed to delete note' },
+      { status: 500 }
+    )
+  }
+}

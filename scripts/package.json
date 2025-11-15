@@ -1,0 +1,11 @@
+{
+  "name": "notes-db-scripts",
+  "version": "1.0.0",
+  "scripts": {
+    "init-db": "tsx init-db.ts"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^0.4.7",
+    "tsx": "^4.7.0"
+  }
+}

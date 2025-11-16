@@ -7,9 +7,9 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'Notes App',
-  description: 'Manage your notes efficiently',
-  generator: 'v0.app',
+  title: 'Приложение для управления заметками',
+  description: 'Управление заметками',
+  generator: 'notes.app',
   icons: {
     icon: [
       {

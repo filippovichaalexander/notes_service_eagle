@@ -14,8 +14,12 @@ WORKDIR /app
 RUN apk add --no-cache dumb-init
 
 COPY backend/package*.json ./
-RUN npm ci --only=production
+RUN npm ci
 
+# Копируем исходный код для миграций
+COPY backend/ ./
+
+# Копируем собранный бэкенд
 COPY --from=builder /app/dist ./dist
 
 EXPOSE 3001

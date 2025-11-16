@@ -1,0 +1,22 @@
+{
+  "name": "notes-backend",
+  "version": "1.0.0",
+  "description": "Moleculer microservices backend for Notes app",
+  "main": "index.js",
+  "scripts": {
+    "start": "moleculer start",
+    "dev": "moleculer dev",
+    "build": "tsc",
+    "test": "jest"
+  },
+  "dependencies": {
+    "moleculer": "^0.14.31",
+    "jsonwebtoken": "^9.1.2",
+    "crypto": "^1.0.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "@types/node": "^20.10.6",
+    "@types/moleculer": "^0.14.20"
+  }
+}

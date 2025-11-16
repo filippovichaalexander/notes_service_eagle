@@ -53,6 +53,23 @@ services:
     networks:
       - notes-network
 
+  # Database Migration Service
+  db-migration:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: notes-db-migration
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-notes_app}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["npx", "tsx", "backend/init-db.ts"]
+    networks:
+      - notes-network
+    restart: "no"
+
   # Moleculer Backend Service
   backend:
     build:
@@ -75,6 +92,8 @@ services:
         condition: service_healthy
       nats:
         condition: service_healthy
+      db-migration:
+        condition: service_completed_successfully  # Ждем завершения миграций
     volumes:
       - ./backend:/app
       - /app/node_modules

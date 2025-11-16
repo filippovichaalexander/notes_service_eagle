@@ -1,6 +1,7 @@
 import { Service, Context, ServiceSchema, ServiceSettingSchema } from 'moleculer'
 import crypto from 'crypto'
 import jwt, { JwtPayload } from 'jsonwebtoken'
+import { Pool } from 'pg'
 
 interface User {
   id: number
@@ -12,8 +13,7 @@ interface User {
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'
 
 type UsersServiceThis = Service & {
-  users: User[]
-  nextUserId: number
+  pool: Pool
 }
 
 const usersService: ServiceSchema<ServiceSettingSchema, UsersServiceThis> = {
@@ -34,18 +34,14 @@ const usersService: ServiceSchema<ServiceSettingSchema, UsersServiceThis> = {
         email: 'string',
         password: 'string',
       },
-      handler(
+      async handler(
         this: UsersServiceThis,
         ctx: Context<{ email: string; password: string }>
-      ): { user: { id: number; email: string }; token: string } {
+      ): Promise<{ user: { id: number; email: string }; token: string }> {
         const { email, password } = ctx.params
 
         if (!email?.trim() || !password?.trim()) {
           throw new Error('Email and password required')
-        }
-
-        if (this.users.find((u: User) => u.email === email)) {
-          throw new Error('Пользователь уже существует')
         }
 
         const hashedPassword = crypto
@@ -53,24 +49,31 @@ const usersService: ServiceSchema<ServiceSettingSchema, UsersServiceThis> = {
           .update(password)
           .digest('hex')
 
-        const newUser: User = {
-          id: ++this.nextUserId,
-          email,
-          password: hashedPassword,
-          createdAt: new Date().toISOString(),
-        }
+        try {
+          const result = await this.pool.query(
+            `INSERT INTO users (email, password) 
+             VALUES ($1, $2) 
+             RETURNING id, email, created_at as "createdAt"`,
+            [email.trim(), hashedPassword]
+          )
 
-        this.users.push(newUser)
+          const user = result.rows[0]
 
-        const token = jwt.sign(
-          { userId: newUser.id, email: newUser.email },
-          JWT_SECRET,
-          { expiresIn: '7d' }
-        )
+          const token = jwt.sign(
+            { userId: user.id, email: user.email },
+            JWT_SECRET,
+            { expiresIn: '7d' }
+          )
 
-        return {
-          user: { id: newUser.id, email: newUser.email },
-          token,
+          return {
+            user: { id: user.id, email: user.email },
+            token,
+          }
+        } catch (error: any) {
+          if (error.code === '23505') {
+            throw new Error('Пользователь уже существует')
+          }
+          throw error
         }
       },
     },
@@ -80,21 +83,27 @@ const usersService: ServiceSchema<ServiceSettingSchema, UsersServiceThis> = {
         email: 'string',
         password: 'string',
       },
-      handler(
+      async handler(
         this: UsersServiceThis,
         ctx: Context<{ email: string; password: string }>
-      ): { user: { id: number; email: string }; token: string } {
+      ): Promise<{ user: { id: number; email: string }; token: string }> {
         const { email, password } = ctx.params
-
-        const user = this.users.find((u: User) => u.email === email)
-        if (!user) {
-          throw new Error('Invalid credentials')
-        }
 
         const hashedPassword = crypto
           .createHash('sha256')
           .update(password)
           .digest('hex')
+
+        const result = await this.pool.query(
+          'SELECT id, email, password FROM users WHERE email = $1',
+          [email]
+        )
+
+        if (result.rows.length === 0) {
+          throw new Error('Invalid credentials')
+        }
+
+        const user = result.rows[0]
 
         if (user.password !== hashedPassword) {
           throw new Error('Invalid credentials')
@@ -132,8 +141,20 @@ const usersService: ServiceSchema<ServiceSettingSchema, UsersServiceThis> = {
   },
 
   created(this: UsersServiceThis) {
-    this.users = []
-    this.nextUserId = 0
+    this.pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      max: 20,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 2000,
+    })
+
+    console.log('✅ PostgreSQL pool создан для сервиса пользователей')
+  },
+
+  stopped(this: UsersServiceThis) {
+    if (this.pool) {
+      this.pool.end()
+    }
   },
 }
 
